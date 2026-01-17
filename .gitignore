@@ -59,3 +59,6 @@ nul
 
 # 本地依赖库（已改用 Maven 仓库）
 libs/
+
+# 本地开发配置（不提交到 Git）
+gradle-local.properties

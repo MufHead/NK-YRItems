@@ -6,14 +6,6 @@ plugins {
 group = "com.yirankuma.yritems"
 version = "1.0-SNAPSHOT"
 
-// 智能检测 Java Home：CI 环境使用 Jenkins 配置的 JDK，本地使用 gradle.properties 配置
-if (System.getenv("CI") != "true" && project.hasProperty("org.gradle.java.home")) {
-    val javaHomePath = project.property("org.gradle.java.home") as String
-    if (file(javaHomePath).exists()) {
-        println("使用本地 JDK: $javaHomePath")
-    }
-}
-
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
@@ -55,8 +47,10 @@ tasks.shadowJar {
     archiveVersion.set(project.version.toString())
     archiveClassifier.set("")
 
-    // 仅在本地开发时使用自定义输出目录
-    if (System.getenv("CI") == null) {
+    // 只在本地构建时输出到自定义目录，CI环境使用默认目录
+    // 通过环境变量判断是否在CI环境（Jenkins）
+    val isCI = System.getenv("JENKINS_HOME") != null
+    if (!isCI) {
         val localOutputDir = file("E:/ServerPLUGINS/网易NK服务器插件")
         if (localOutputDir.exists()) {
             destinationDirectory.set(localOutputDir)
