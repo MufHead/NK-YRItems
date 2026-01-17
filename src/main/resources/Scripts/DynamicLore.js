@@ -323,6 +323,14 @@ function processItem(item) {
             return null;
         }
 
+        // 检查是否已经处理过（避免重复处理导致槽位跳动）
+        if (nbt.contains("_DynamicLore")) {
+            if (DEBUG_MODE) {
+                print("[DynamicLore] processItem: 物品已处理过，跳过");
+            }
+            return null;
+        }
+
         var nbtData = nbtToObject(nbt);
         if (!nbtData.YRAttributes) {
             if (DEBUG_MODE) {
