@@ -18,7 +18,26 @@ var CONFIG_FILE = "display_rules.yml";  // 配置文件名
 // 显示规则缓存（从YAML加载）
 var displayRules = null;
 
+// 已处理物品的缓存（基于物品hash，避免重复处理）
+var processedItemsCache = {};
+
 // ==================== 工具函数 ====================
+
+/**
+ * 生成物品的唯一标识（基于NBT内容）
+ */
+function getItemFingerprint(item) {
+    try {
+        var nbt = item.getNamedTag();
+        if (!nbt || nbt.isEmpty()) {
+            return item.getId() + ":" + item.getDamage();
+        }
+        // 使用Java的hashCode作为指纹
+        return item.getId() + ":" + item.getDamage() + ":" + nbt.hashCode();
+    } catch (e) {
+        return item.getId() + ":" + item.getDamage() + ":" + Math.random();
+    }
+}
 
 /**
  * 将NBT CompoundTag转换为JavaScript对象
@@ -315,18 +334,21 @@ function processItem(item) {
     }
 
     try {
-        var nbt = item.getNamedTag();
-        if (!nbt || nbt.isEmpty()) {
+        // 生成物品指纹
+        var fingerprint = getItemFingerprint(item);
+
+        // 检查缓存（避免重复处理导致槽位跳动）
+        if (processedItemsCache[fingerprint]) {
             if (DEBUG_MODE) {
-                print("[DynamicLore] processItem: NBT为空");
+                print("[DynamicLore] processItem: 物品已处理过（缓存命中），跳过");
             }
             return null;
         }
 
-        // 检查是否已经处理过（避免重复处理导致槽位跳动）
-        if (nbt.contains("_DynamicLore")) {
+        var nbt = item.getNamedTag();
+        if (!nbt || nbt.isEmpty()) {
             if (DEBUG_MODE) {
-                print("[DynamicLore] processItem: 物品已处理过，跳过");
+                print("[DynamicLore] processItem: NBT为空");
             }
             return null;
         }
@@ -370,6 +392,18 @@ function processItem(item) {
 
         if (DEBUG_MODE) {
             print("[DynamicLore] processItem: 成功处理物品");
+        }
+
+        // 添加到缓存（带过期时间，避免内存泄漏）
+        processedItemsCache[fingerprint] = Date.now();
+
+        // 清理过期缓存（超过5秒的认为已过期）
+        var now = Date.now();
+        var expireTime = 5000; // 5秒
+        for (var key in processedItemsCache) {
+            if (now - processedItemsCache[key] > expireTime) {
+                delete processedItemsCache[key];
+            }
         }
 
         return cloned;

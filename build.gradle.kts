@@ -45,7 +45,7 @@ tasks.test {
 tasks.shadowJar {
     // 设置JAR文件名（本地和CI都使用）
     archiveBaseName.set("YRItems")
-    archiveVersion.set(project.version.toString())
+    archiveVersion.set("")
     archiveClassifier.set("")
 
     // 只在本地构建时输出到自定义目录，CI环境使用默认目录
