@@ -130,10 +130,12 @@ public class YRItemsCommand extends Command {
         
         Player player = (Player) sender;
         Item item = itemData.toItem(); // 直接使用ItemData的toItem方法
-        
+
         if (player.getInventory().canAddItem(item)) {
             player.getInventory().addItem(item);
-            sender.sendMessage(TextFormat.GREEN + "成功获得物品: " + TextFormat.RESET + itemData.getName());
+            // 从实际的Item对象获取已替换占位符后的名称
+            String displayName = item.hasCustomName() ? item.getCustomName() : item.getName();
+            sender.sendMessage(TextFormat.GREEN + "成功获得物品: " + TextFormat.RESET + displayName);
         } else {
             sender.sendMessage(TextFormat.RED + "背包空间不足！");
         }
@@ -180,8 +182,10 @@ public class YRItemsCommand extends Command {
 
         if (target.getInventory().canAddItem(item)) {
             target.getInventory().addItem(item);
-            sender.sendMessage(TextFormat.GREEN + "成功给予 " + target.getName() + " " + amount + "个 " + itemData.getName());
-            target.sendMessage(TextFormat.GREEN + "你收到了 " + amount + "个 " + TextFormat.RESET + itemData.getName());
+            // 从实际的Item对象获取已替换占位符后的名称
+            String displayName = item.hasCustomName() ? item.getCustomName() : item.getName();
+            sender.sendMessage(TextFormat.GREEN + "成功给予 " + target.getName() + " " + amount + "个 " + displayName);
+            target.sendMessage(TextFormat.GREEN + "你收到了 " + amount + "个 " + TextFormat.RESET + displayName);
         } else {
             sender.sendMessage(TextFormat.RED + "玩家 " + target.getName() + " 的背包空间不足！");
         }
