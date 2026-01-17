@@ -2,32 +2,57 @@ pipeline {
     agent any
 
     tools {
-        // 配置 JDK 17（根据 MOTCI 实际配置调整）
+        // 配置 JDK（使用 MOTCI 上配置的 JDK）
         jdk 'JDK17'
     }
 
     environment {
         // 构建配置
-        GRADLE_OPTS = '-Dorg.gradle.daemon=false'
-        CI = 'true'  // 标记为 CI 环境，禁用本地路径输出
+        GRADLE_OPTS = '-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2048m'
+        CI = 'true'
     }
 
     stages {
+        stage('Environment Info') {
+            steps {
+                echo '=== 环境信息 ==='
+                script {
+                    if (isUnix()) {
+                        sh 'java -version'
+                        sh 'pwd'
+                        sh 'ls -la'
+                    } else {
+                        bat 'java -version'
+                        bat 'cd'
+                        bat 'dir'
+                    }
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
-                echo '检出代码...'
+                echo '=== 检出代码 ==='
                 checkout scm
+                script {
+                    if (isUnix()) {
+                        sh 'git log -1 --pretty=format:"%h - %an: %s"'
+                    } else {
+                        bat 'git log -1 --pretty=format:"%%h - %%an: %%s"'
+                    }
+                }
             }
         }
 
         stage('Build') {
             steps {
-                echo '开始构建项目...'
+                echo '=== 开始构建 ==='
                 script {
                     if (isUnix()) {
-                        sh './gradlew clean build --no-daemon'
+                        sh 'chmod +x gradlew'
+                        sh './gradlew clean build --no-daemon --stacktrace'
                     } else {
-                        bat 'gradlew.bat clean build --no-daemon'
+                        bat 'gradlew.bat clean build --no-daemon --stacktrace'
                     }
                 }
             }
@@ -35,7 +60,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo '运行测试...'
+                echo '=== 运行测试 ==='
                 script {
                     if (isUnix()) {
                         sh './gradlew test --no-daemon || true'
@@ -46,7 +71,6 @@ pipeline {
             }
             post {
                 always {
-                    // 发布测试报告（如果存在）
                     junit allowEmptyResults: true, testResults: '**/build/test-results/test/*.xml'
                 }
             }
@@ -54,9 +78,15 @@ pipeline {
 
         stage('Archive') {
             steps {
-                echo '归档构建产物...'
-                // 归档 JAR 文件
-                archiveArtifacts artifacts: '**/build/libs/*.jar', fingerprint: true
+                echo '=== 归档构建产物 ==='
+                script {
+                    if (isUnix()) {
+                        sh 'ls -lh build/libs/'
+                    } else {
+                        bat 'dir build\\libs\\'
+                    }
+                }
+                archiveArtifacts artifacts: '**/build/libs/*.jar', fingerprint: true, allowEmptyArchive: false
             }
         }
     }
@@ -64,12 +94,19 @@ pipeline {
     post {
         success {
             echo '✅ 构建成功！'
+            script {
+                if (isUnix()) {
+                    sh 'echo "Build #${BUILD_NUMBER} completed successfully"'
+                } else {
+                    bat 'echo Build #%BUILD_NUMBER% completed successfully'
+                }
+            }
         }
         failure {
-            echo '❌ 构建失败！'
+            echo '❌ 构建失败！请查看日志'
         }
         always {
-            // 清理工作空间
+            echo '=== 清理工作空间 ==='
             cleanWs()
         }
     }
