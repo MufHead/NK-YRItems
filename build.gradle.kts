@@ -7,21 +7,19 @@ group = "com.yirankuma.yritems"
 version = "1.0-SNAPSHOT"
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(18))
-    }
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 repositories {
     mavenCentral()
+    maven("https://repo.opencollab.dev/maven-releases/")
+    maven("https://repo.opencollab.dev/maven-snapshots/")
 }
 
-
-
 dependencies {
-    compileOnly(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    // Nukkit MOT 依赖（从 Maven 仓库获取）
+    compileOnly("cn.nukkit:nukkit:1.0-SNAPSHOT")
 
     // 添加 Rhino JavaScript 引擎
     implementation("org.mozilla:rhino:1.7.14")
@@ -46,12 +44,15 @@ tasks.test {
 // 配置Shadow JAR任务
 tasks.shadowJar {
     archiveBaseName.set("YRItems")
-    archiveVersion.set("")
-    archiveClassifier.set("")  // 添加这行来移除-all后缀
-    destinationDirectory.set(file("E:/ServerPLUGINS/网易NK服务器插件"))
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set("")
 
-    doFirst {
-        destinationDirectory.get().asFile.mkdirs()
+    // 仅在本地开发时使用自定义输出目录
+    if (System.getenv("CI") == null) {
+        val localOutputDir = file("E:/ServerPLUGINS/网易NK服务器插件")
+        if (localOutputDir.exists()) {
+            destinationDirectory.set(localOutputDir)
+        }
     }
 }
 

@@ -56,3 +56,6 @@ nul
 
 # IntelliJ IDEA 完整配置
 .idea/
+
+# 本地依赖库（已改用 Maven 仓库）
+libs/

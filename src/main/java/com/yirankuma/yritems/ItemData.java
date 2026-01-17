@@ -32,7 +32,8 @@ public class ItemData {
      * @param item Nukkit的Item对象
      */
     public ItemData(Item item) {
-        this.identifier = item.getNamespaceId();
+        // 使用 getId() 和 getDamage() 来构造标识符
+        this.identifier = "minecraft:" + item.getId() + (item.getDamage() != 0 ? ":" + item.getDamage() : "");
         this.name = item.hasCustomName() ? item.getCustomName() : null;
         this.lore = item.getLore() != null ? Arrays.asList(item.getLore()) : new ArrayList<>();
         this.nbt = extractNbtFromItem(item);
