@@ -1,0 +1,128 @@
+# 动态Lore显示规则配置
+#
+# 这个文件定义了如何根据物品的NBT数据动态生成Lore
+# 脚本会读取这个配置文件来决定显示什么内容
+
+# ==================== 强化等级显示规则 ====================
+
+# 规则名称：enhance_level
+# 用途：根据物品的 "level" NBT 值显示强化等级
+enhance_level:
+  # 读取的NBT键名
+  nbt_key: "level"
+
+  # 显示格式（{value} 会被替换为实际值）
+  # 例如：level=0 时显示 "强化等级: 1"
+  display_format: "§e强化等级: §f{value_plus_1}"
+
+  # 值映射规则（可选）
+  # 当 level = 0/1/2 时分别显示不同的文本
+  value_mappings:
+    '0':
+      level_text: "§f强化等级 §71§f"
+      description: "§7初级强化"
+    '1':
+      level_text: "§f强化等级 §e2§f"
+      description: "§e中级强化"
+    '2':
+      level_text: "§f强化等级 §63§f"
+      description: "§6高级强化"
+
+# ==================== 品质显示规则 ====================
+
+quality:
+  nbt_key: "Quality"
+
+  # 品质颜色映射
+  value_mappings:
+    "普通":
+      color: "§f"
+      display: "§f品质: 普通"
+    "优秀":
+      color: "§a"
+      display: "§a品质: 优秀"
+    "稀有":
+      color: "§9"
+      display: "§9品质: 稀有"
+    "史诗":
+      color: "§5"
+      display: "§5品质: 史诗"
+    "传说":
+      color: "§6"
+      display: "§6品质: 传说"
+
+# ==================== 武器类型显示规则 ====================
+
+weapon_type:
+  nbt_key: "WeaponType"
+
+  value_mappings:
+    "sword":
+      display: "§c⚔ 剑"
+      description: "§7近战武器"
+    "bow":
+      display: "§a⇀ 弓"
+      description: "§7远程武器"
+    "staff":
+      display: "§b✦ 法杖"
+      description: "§7魔法武器"
+
+# ==================== 耐久度显示规则 ====================
+
+durability:
+  nbt_key: "Durability"
+  display_format: "§7耐久度: §f{value}"
+
+  # 根据数值范围显示不同颜色
+  value_ranges:
+    - min: 0
+      max: 30
+      color: "§c"  # 红色（低耐久）
+    - min: 31
+      max: 70
+      color: "§e"  # 黄色（中等）
+    - min: 71
+      max: 999999
+      color: "§a"  # 绿色（高耐久）
+
+# ==================== 等级需求显示规则 ====================
+
+required_level:
+  nbt_key: "RequiredLevel"
+  display_format: "§c需要等级: §f{value}"
+
+# ==================== 自定义属性显示规则 ====================
+
+# 简单的数值属性
+damage:
+  nbt_key: "Damage"
+  display_format: "§c攻击力: §f{value}"
+
+defense:
+  nbt_key: "Defense"
+  display_format: "§9防御力: §f{value}"
+
+# 百分比属性
+crit_rate:
+  nbt_key: "CritRate"
+  display_format: "§e暴击率: §f{value}%"
+
+crit_damage:
+  nbt_key: "CritDamage"
+  display_format: "§6暴击伤害: §f{value}%"
+
+# ==================== 特殊效果描述 ====================
+
+special_effects:
+  nbt_key: "SpecialEffect"
+
+  value_mappings:
+    "fire":
+      display: "§c§l特殊效果"
+      description: "§c火焰附加: 攻击时有30%几率点燃敌人"
+    "freeze":
+      display: "§b§l特殊效果"
+      description: "§b冰冻: 攻击时有20%几率冻结敌人2秒"
+    "poison":
+      display: "§2§l特殊效果"
+      description: "§2剧毒: 攻击时有25%几率造成持续毒伤害"

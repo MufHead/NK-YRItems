@@ -1,0 +1,66 @@
+示例权重名称的铁剑:
+  identifier: minecraft:iron_sword
+  name: "<weight-name>"
+  lore:
+    - "这把剑的名字是: <weight-name>"
+    - "随机描述: <string-desc>"
+    - "正态随机数: <gauss>"
+    - "计算结果: <calc>"
+    - "快速计算: <fast>"
+    - "概率成功次数: <chance>"
+    - "声明选择: <decl.0> | <decl.1>"
+    - "声明长度: <decl.length> 未选长度: <decl.else.length>"
+    - "JS节点: <jsnode>"
+  sections:
+    weight-name:
+      type: weight
+      values:
+        - "5::荣耀之刃"
+        - "3::流光"
+        - "1::破晓"
+    string-desc:
+      type: strings
+      values:
+        - "锋利如斯"
+        - "寒光四射"
+        - "古代遗物"
+    gauss:
+      type: gaussian
+      base: 100
+      spread: 0.1
+      maxSpread: 0.5
+      fixed: 1
+    calc:
+      type: calculation
+      formula: 1+2+3
+      fixed: 0
+    fast:
+      type: fastcalc
+      formula: (10+5*2)/3
+      fixed: 2
+    chance:
+      type: chance
+      success: 0.5
+      total: 1
+      repeat: 10
+      min: 2
+      max: 8
+    decl:
+      type: weightdeclare
+      key: decl
+      list:
+        - "1::暴击率"
+        - "1::暴击伤害"
+        - "2::攻击力"
+        - "2::攻击百分比"
+        - "3::防御力"
+        - "4::生命值"
+      amount: 2
+      shuffled: true
+      putelse: true
+    jsnode:
+      type: js
+      path: ExampleScript.js::main
+      args:
+        - "YRItems"
+        - "Hello"

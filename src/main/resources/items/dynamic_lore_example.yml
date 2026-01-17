@@ -1,0 +1,131 @@
+# 动态Lore示例物品配置
+# 这些物品展示了如何使用YRAttributes来实现动态Lore
+
+# 示例1: 基础属性武器
+传奇之剑:
+  identifier: minecraft:diamond_sword
+  name: "§6§l传奇之剑"
+  # 注意：这里不设置lore，Lore会通过NBT动态生成
+  nbt:
+    YRAttributes:
+      Damage: "50-80"
+      CritRate: 25
+      CritDamage: 150
+      AttackSpeed: 1.6
+      Quality: "传说"
+      RequiredLevel: 50
+
+# 示例2: 带范围伤害的武器
+狂战士巨斧:
+  identifier: minecraft:iron_axe
+  name: "§c§l狂战士巨斧"
+  nbt:
+    YRAttributes:
+      MinDamage: 35
+      MaxDamage: 75
+      CritRate: 15
+      AttackSpeed: 1.2
+      Quality: "史诗"
+
+# 示例3: 带附加属性的装备
+龙鳞护甲:
+  identifier: minecraft:diamond_chestplate
+  name: "§9§l龙鳞护甲"
+  nbt:
+    YRAttributes:
+      Defense: 120
+      Health: 500
+      Toughness: 8
+      Quality: "传说"
+      ExtraStats:
+        "火焰抗性": "50%"
+        "击退抗性": "80%"
+
+# 示例4: 带附魔的物品
+魔法法杖:
+  identifier: minecraft:stick
+  name: "§d§l魔法法杖"
+  nbt:
+    YRAttributes:
+      Damage: "20-40"
+      Quality: "稀有"
+      Enchantments:
+        - name: "锋利"
+          level: 5
+        - name: "耐久"
+          level: 3
+
+# 示例5: 使用节点系统动态生成属性
+随机属性之剑:
+  identifier: minecraft:iron_sword
+  name: "§e<quality>之剑"
+  sections:
+    # 随机品质
+    quality:
+      type: strings
+      values:
+        - "普通"
+        - "优秀"
+        - "稀有"
+        - "史诗"
+        - "传说"
+
+    # 随机伤害范围
+    min-damage:
+      type: number
+      min: 10
+      max: 30
+      fixed: 0
+
+    max-damage:
+      type: number
+      min: 40
+      max: 80
+      fixed: 0
+
+    # 随机暴击率
+    crit-rate:
+      type: number
+      min: 5
+      max: 30
+      fixed: 1
+
+    # 构建NBT（使用节点值）
+    damage-range:
+      type: strings
+      value: "<min-damage>-<max-damage>"
+
+  nbt:
+    YRAttributes:
+      Damage: "<damage-range>"
+      CritRate: "<crit-rate>"
+      Quality: "<quality>"
+
+# 示例6: 复杂的随机属性装备
+终极守护者:
+  identifier: minecraft:diamond_helmet
+  name: "§6§l终极守护者"
+  sections:
+    # 使用高斯分布生成防御值
+    defense:
+      type: gaussian
+      base: 100
+      spread: 0.2
+      maxSpread: 0.5
+      fixed: 0
+
+    # 使用权重选择品质
+    quality:
+      type: weight
+      values:
+        - "50::普通"
+        - "30::优秀"
+        - "15::稀有"
+        - "4::史诗"
+        - "1::传说"
+
+  nbt:
+    YRAttributes:
+      Defense: "<defense>"
+      Quality: "<quality>"
+      RequiredLevel: 30

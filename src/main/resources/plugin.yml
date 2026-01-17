@@ -1,0 +1,23 @@
+name: YRItems
+version: 1.0.1
+main: com.yirankuma.yritems.YRItems
+api: ["1.0.0"]
+author: YiranKuma
+description: 物品库插件
+
+# commands:
+#   yritems:
+#     description: YRItems主命令
+#     usage: "/yritems <list|get|give> [参数]"
+#     aliases: ["yri"]
+#     permission: yritems.command
+
+permissions:
+  yritems.command:
+    description: 使用YRItems命令的权限
+    default: op
+  yritems.admin:
+    description: YRItems管理员权限
+    default: op
+    children:
+      yritems.command: true
