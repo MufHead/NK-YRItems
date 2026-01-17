@@ -43,6 +43,7 @@ tasks.test {
 
 // 配置Shadow JAR任务
 tasks.shadowJar {
+    // 设置JAR文件名（本地和CI都使用）
     archiveBaseName.set("YRItems")
     archiveVersion.set(project.version.toString())
     archiveClassifier.set("")
