@@ -6,6 +6,14 @@ plugins {
 group = "com.yirankuma.yritems"
 version = "1.0-SNAPSHOT"
 
+// 智能检测 Java Home：CI 环境使用 Jenkins 配置的 JDK，本地使用 gradle.properties 配置
+if (System.getenv("CI") != "true" && project.hasProperty("org.gradle.java.home")) {
+    val javaHomePath = project.property("org.gradle.java.home") as String
+    if (file(javaHomePath).exists()) {
+        println("使用本地 JDK: $javaHomePath")
+    }
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
