@@ -34,29 +34,37 @@ public class PacketReceiveListener implements Listener {
     public void onPacketReceive(DataPacketReceiveEvent event) {
         DataPacket packet = event.getPacket();
 
-        // 检查 MobEquipmentPacket（槽位切换）
+        /// 检查 MobEquipmentPacket（槽位切换）
         if (packet instanceof MobEquipmentPacket) {
             MobEquipmentPacket mobPacket = (MobEquipmentPacket) packet;
 
-            // 强制同步服务器端的手持槽位
-            // 只对有 YRAttributes 的特殊物品才同步
             try {
                 int slot = mobPacket.hotbarSlot;
                 cn.nukkit.Player player = event.getPlayer();
 
-                // 检查该槽位的物品是否有 UseDynamicLore 标记
-                Item slotItem = player.getInventory().getItem(slot);
-                boolean useDynamicLore = slotItem != null &&
-                                         slotItem.hasCompoundTag() &&
-                                         slotItem.getNamedTag().contains("UseDynamicLore") &&
-                                         slotItem.getNamedTag().getByte("UseDynamicLore") == 1;
+                // 获取服务器端该槽位的实际物品
+                Item serverItem = player.getInventory().getItem(slot);
+
+                // 检查是否是动态Lore物品
+                boolean useDynamicLore = serverItem != null &&
+                        serverItem.hasCompoundTag() &&
+                        serverItem.getNamedTag().contains("UseDynamicLore") &&
+                        serverItem.getNamedTag().getByte("UseDynamicLore") == 1;
 
                 if (useDynamicLore) {
-                    // 直接设置 heldItemIndex
-                    // player.getInventory().setHeldItemIndex(slot);
+                    // 关键步骤：用服务器端的物品（无动态Lore）替换客户端发来的物品（有动态Lore）
+                    // 这样 MOT 核心的反作弊检测就会通过
+                    mobPacket.item = serverItem;
+
+                    if (plugin.getConfig().getBoolean("debug", false)) {
+                        plugin.getLogger().debug("[假Lore绕过] 已替换槽位 " + slot + " 的物品数据，绕过反作弊检测");
+                    }
                 }
-            } catch (Exception ignored) {
-                // 忽略异常
+            } catch (Exception e) {
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().error("处理 MobEquipmentPacket 失败: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
 
