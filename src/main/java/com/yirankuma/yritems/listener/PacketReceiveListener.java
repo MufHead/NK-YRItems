@@ -44,15 +44,16 @@ public class PacketReceiveListener implements Listener {
                 int slot = mobPacket.hotbarSlot;
                 cn.nukkit.Player player = event.getPlayer();
 
-                // 检查该槽位的物品是否有 YRAttributes（服务器端物品没有 _DynamicLore）
+                // 检查该槽位的物品是否有 UseDynamicLore 标记
                 Item slotItem = player.getInventory().getItem(slot);
-                boolean hasYRAttributes = slotItem != null &&
+                boolean useDynamicLore = slotItem != null &&
                                          slotItem.hasCompoundTag() &&
-                                         slotItem.getNamedTag().contains("YRAttributes");
+                                         slotItem.getNamedTag().contains("UseDynamicLore") &&
+                                         slotItem.getNamedTag().getByte("UseDynamicLore") == 1;
 
-                if (hasYRAttributes) {
+                if (useDynamicLore) {
                     // 直接设置 heldItemIndex
-                    player.getInventory().setHeldItemIndex(slot);
+                    // player.getInventory().setHeldItemIndex(slot);
                 }
             } catch (Exception ignored) {
                 // 忽略异常

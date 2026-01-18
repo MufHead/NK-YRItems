@@ -7,6 +7,7 @@
   name: "§6§l传奇之剑"
   # 注意：这里不设置lore，Lore会通过NBT动态生成
   nbt:
+    UseDynamicLore: 1  # 启用动态Lore（必须设置为1）
     YRAttributes:
       Damage: "50-80"
       CritRate: 25
@@ -20,6 +21,7 @@
   identifier: minecraft:iron_axe
   name: "§c§l狂战士巨斧"
   nbt:
+    UseDynamicLore: 1  # 启用动态Lore
     YRAttributes:
       MinDamage: 35
       MaxDamage: 75

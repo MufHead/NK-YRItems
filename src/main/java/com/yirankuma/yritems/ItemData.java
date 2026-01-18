@@ -18,7 +18,6 @@ public class ItemData {
     private List<String> lore;
     private Map<String, Object> nbt;
     private Map<String, NodeDefinition> sections;
-    private boolean useDynamicLore; // 是否启用动态Lore
 
     public ItemData(String identifier, String name, List<String> lore, Map<String, Object> nbt) {
         this.identifier = identifier;
@@ -26,7 +25,6 @@ public class ItemData {
         this.lore = lore;
         this.nbt = nbt;
         this.sections = new HashMap<>();
-        this.useDynamicLore = false; // 默认不启用
     }
     
     /**
@@ -88,14 +86,6 @@ public class ItemData {
 
     public void setSections(Map<String, NodeDefinition> sections) {
         this.sections = sections != null ? sections : new HashMap<>();
-    }
-
-    public boolean isUseDynamicLore() {
-        return useDynamicLore;
-    }
-
-    public void setUseDynamicLore(boolean useDynamicLore) {
-        this.useDynamicLore = useDynamicLore;
     }
 
     /**
@@ -167,9 +157,12 @@ public class ItemData {
             applyNbtToItem(nbt, this.nbt, nodeResults);
         }
 
-        // 如果配置了使用动态Lore，添加标记
-        if (this.useDynamicLore) {
-            nbt.putByte("_DynamicLore", (byte) 1);
+        // 检查是否配置了 UseDynamicLore
+        if (this.nbt != null && this.nbt.containsKey("UseDynamicLore")) {
+            Object useDynamicLore = this.nbt.get("UseDynamicLore");
+            if (useDynamicLore instanceof Number && ((Number) useDynamicLore).byteValue() == 1) {
+                nbt.putByte("UseDynamicLore", (byte) 1);
+            }
         }
 
         item.setNamedTag(nbt);

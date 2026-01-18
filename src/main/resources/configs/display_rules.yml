@@ -3,30 +3,44 @@
 # 这个文件定义了如何根据物品的NBT数据动态生成Lore
 # 脚本会读取这个配置文件来决定显示什么内容
 
+# ==================== 显示顺序配置 ====================
+# 定义各部分的显示顺序
+# 可用的部分: attributes（属性）, enchantments（附魔）, level（等级）, bound（绑定）
+display_order:
+  - "attributes"     # 普通属性（根据下面的规则显示）
+  - "enchantments"   # 附魔信息
+  - "level"          # 强化等级（level NBT，显示在倒数第二位）
+  - "bound"          # 绑定玩家
+
 # ==================== 强化等级显示规则 ====================
 
-# 规则名称：enhance_level
-# 用途：根据物品的 "level" NBT 值显示强化等级
+# 规则名称：enhance_level（用于显示强化等级）
+# 用途：根据物品的 "EnhanceLevel" NBT 值显示强化等级
 enhance_level:
   # 读取的NBT键名
-  nbt_key: "level"
+  nbt_key: "EnhanceLevel"
 
-  # 显示格式（{value} 会被替换为实际值）
-  # 例如：level=0 时显示 "强化等级: 1"
-  display_format: "§e强化等级: §f{value_plus_1}"
-
-  # 值映射规则（可选）
-  # 当 level = 0/1/2 时分别显示不同的文本
+  # 值映射规则
+  # 当 level = 0/1/2... 时分别显示不同的文本
   value_mappings:
     '0':
-      level_text: "§f强化等级 §71§f"
-      description: "§7初级强化"
+      level_text: "§f强化等级 §71"
+      description: "§7普通的强化"
     '1':
-      level_text: "§f强化等级 §e2§f"
-      description: "§e中级强化"
+      level_text: "§f强化等级 §e2"
+      description: "§e优秀的强化"
     '2':
-      level_text: "§f强化等级 §63§f"
-      description: "§6高级强化"
+      level_text: "§f强化等级 §63"
+      description: "§6强力的强化"
+    '3':
+      level_text: "§f强化等级 §64"
+      description: "§6卓越的强化"
+    '4':
+      level_text: "§f强化等级 §c5"
+      description: "§c史诗的强化"
+    '5':
+      level_text: "§f强化等级 §d6"
+      description: "§d传说的强化"
 
 # ==================== 品质显示规则 ====================
 

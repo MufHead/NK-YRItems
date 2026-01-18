@@ -12,11 +12,15 @@
 // ==================== 配置区 ====================
 
 var DYNAMIC_LORE_ENABLED = true;  // 是否启用动态Lore
-var DEBUG_MODE = false;            // 调试模式 - 关闭以减少日志输出
+var DEBUG_MODE = true;              // 调试模式 - 开启以查看详细日志
 var CONFIG_FILE = "display_rules.yml";  // 配置文件名
 
 // 显示规则缓存（从YAML加载）
 var displayRules = null;
+var displayOrder = null;  // 显示顺序配置
+
+// 默认显示顺序
+var DEFAULT_DISPLAY_ORDER = ["attributes", "enchantments", "level", "bound"];
 
 // ==================== 工具函数 ====================
 
@@ -67,6 +71,10 @@ function listTagToArray(listTag) {
  */
 function loadDisplayRules() {
     try {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 开始加载显示规则配置...");
+        }
+
         var configManager = plugin.getCustomConfigManager();
         if (!configManager) {
             print("[ERROR] CustomConfigManager 未初始化");
@@ -86,10 +94,28 @@ function loadDisplayRules() {
         var keys = rulesMap.keySet().toArray();
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
+            // 跳过 display_order，单独处理
+            if (key == "display_order") {
+                displayOrder = convertConfigValue(rulesMap.get(key));
+                if (DEBUG_MODE) {
+                    print("[INFO] 已加载显示顺序配置: " + JSON.stringify(displayOrder));
+                }
+                continue;
+            }
             rules[key] = convertConfigValue(rulesMap.get(key));
         }
 
-        print("[INFO] 已加载显示规则: " + keys.length + " 条");
+        // 如果没有配置 display_order，使用默认顺序
+        if (!displayOrder) {
+            displayOrder = DEFAULT_DISPLAY_ORDER;
+            if (DEBUG_MODE) {
+                print("[INFO] 使用默认显示顺序: " + JSON.stringify(displayOrder));
+            }
+        }
+
+        if (DEBUG_MODE) {
+            print("[INFO] 已加载显示规则: " + (keys.length - (displayOrder ? 1 : 0)) + " 条");
+        }
         return rules;
 
     } catch (e) {
@@ -203,43 +229,9 @@ function generateDisplayText(rule, nbtValue) {
 // ==================== Lore渲染逻辑 ====================
 
 /**
- * 渲染动态Lore
- * @param {Object} nbtData - NBT数据对象
- * @returns {Array} Lore行数组
+ * 渲染属性部分
  */
-function renderDynamicLore(nbtData) {
-    if (DEBUG_MODE) {
-        print("[DynamicLore] renderDynamicLore 被调用");
-    }
-
-    if (!nbtData.YRAttributes) {
-        if (DEBUG_MODE) {
-            print("[DynamicLore] 物品没有 YRAttributes，跳过");
-        }
-        return null; // 没有YRAttributes，不修改Lore
-    }
-
-    if (DEBUG_MODE) {
-        print("[DynamicLore] 找到 YRAttributes: " + JSON.stringify(nbtData.YRAttributes));
-    }
-
-    // 确保规则已加载
-    if (!displayRules) {
-        print("[DynamicLore] 首次加载显示规则...");
-        displayRules = loadDisplayRules();
-        if (!displayRules) {
-            print("[DynamicLore] 无法加载显示规则！");
-            return null;  // 无法加载规则
-        }
-    }
-
-    var attr = nbtData.YRAttributes;
-    var lore = [];
-
-    // 添加分隔线
-    lore.push("§8§m--------------------");
-
-    // 遍历所有显示规则
+function renderAttributes(attr, lore) {
     var ruleKeys = Object.keys(displayRules);
     if (DEBUG_MODE) {
         print("[DynamicLore] 显示规则数量: " + ruleKeys.length);
@@ -252,6 +244,16 @@ function renderDynamicLore(nbtData) {
         if (!rule || !rule.nbt_key) {
             if (DEBUG_MODE) {
                 print("[DynamicLore] 规则 " + ruleKey + " 无效或缺少 nbt_key");
+            }
+            continue;
+        }
+
+        // 跳过强化等级，它有单独的渲染
+        // 检查规则的 nbt_key 是否为 "EnhanceLevel" 或 "level"
+        var nbtKey = String(rule.nbt_key);
+        if (nbtKey == "EnhanceLevel" || nbtKey == "level") {
+            if (DEBUG_MODE) {
+                print("[DynamicLore] 跳过规则 '" + ruleKey + "'（nbt_key='" + nbtKey + "'，在 level 部分单独处理）");
             }
             continue;
         }
@@ -278,14 +280,227 @@ function renderDynamicLore(nbtData) {
             lore.push(textLines[j]);
         }
     }
+}
 
-    // 显示附魔（如果有）
+/**
+ * 渲染附魔部分
+ */
+function renderEnchantments(attr, lore) {
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 检查附魔...");
+        print("[DynamicLore] attr.Enchantments 存在吗？ " + (attr.Enchantments !== undefined));
+        if (attr.Enchantments) {
+            print("[DynamicLore] attr.Enchantments 类型: " + typeof attr.Enchantments);
+            print("[DynamicLore] attr.Enchantments 长度: " + (attr.Enchantments.length || "无length属性"));
+            print("[DynamicLore] attr.Enchantments 内容: " + JSON.stringify(attr.Enchantments));
+        }
+    }
+
     if (attr.Enchantments && attr.Enchantments.length > 0) {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 找到 " + attr.Enchantments.length + " 个附魔");
+        }
         lore.push("");
         lore.push("§d§l附魔:");
         for (var i = 0; i < attr.Enchantments.length; i++) {
             var ench = attr.Enchantments[i];
+            if (DEBUG_MODE) {
+                print("[DynamicLore] 附魔[" + i + "]: name=" + ench.name + ", level=" + ench.level);
+            }
             lore.push("§d  " + ench.name + " " + romanNumeral(ench.level));
+        }
+    } else {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 没有附魔信息");
+        }
+    }
+}
+
+/**
+ * 渲染强化部分
+ */
+function renderEnhance(attr, lore) {
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 检查强化...");
+        print("[DynamicLore] attr.EnhanceLevel 存在吗？ " + (attr.EnhanceLevel !== undefined));
+    }
+
+    if (attr.EnhanceLevel !== undefined && attr.EnhanceLevel !== null) {
+        // 查找 EnhanceLevel 的显示规则
+        var enhanceRule = null;
+        var ruleKeys = Object.keys(displayRules);
+        for (var i = 0; i < ruleKeys.length; i++) {
+            var rule = displayRules[ruleKeys[i]];
+            if (rule && rule.nbt_key && String(rule.nbt_key) == "EnhanceLevel") {
+                enhanceRule = rule;
+                break;
+            }
+        }
+
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 找到强化等级: " + attr.EnhanceLevel);
+            print("[DynamicLore] 强化显示规则: " + (enhanceRule ? "找到" : "未找到"));
+        }
+
+        if (enhanceRule) {
+            // 使用规则生成显示文本
+            var textLines = generateDisplayText(enhanceRule, attr.EnhanceLevel);
+            lore.push("");
+            for (var j = 0; j < textLines.length; j++) {
+                lore.push(textLines[j]);
+            }
+        } else {
+            // 默认显示
+            lore.push("");
+            lore.push("§e§l强化: §r§e+" + attr.EnhanceLevel);
+        }
+    } else {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 没有强化信息");
+        }
+    }
+}
+
+/**
+ * 渲染等级部分（强化等级）
+ */
+function renderLevel(attr, lore) {
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 检查强化等级...");
+        print("[DynamicLore] attr.EnhanceLevel 存在吗？ " + (attr.EnhanceLevel !== undefined));
+        print("[DynamicLore] attr.level 存在吗？ " + (attr.level !== undefined));
+    }
+
+    // 优先检查 EnhanceLevel，其次检查 level
+    var levelValue = attr.EnhanceLevel !== undefined ? attr.EnhanceLevel : attr.level;
+    var nbtKeyName = attr.EnhanceLevel !== undefined ? "EnhanceLevel" : "level";
+
+    if (levelValue !== undefined && levelValue !== null) {
+        // 查找强化等级的显示规则
+        var levelRule = null;
+        var ruleKeys = Object.keys(displayRules);
+        for (var i = 0; i < ruleKeys.length; i++) {
+            var rule = displayRules[ruleKeys[i]];
+            if (rule && rule.nbt_key) {
+                var ruleNbtKey = String(rule.nbt_key);
+                if (ruleNbtKey == "EnhanceLevel" || ruleNbtKey == "level") {
+                    levelRule = rule;
+                    break;
+                }
+            }
+        }
+
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 找到强化等级: " + levelValue + " (NBT键: " + nbtKeyName + ")");
+            print("[DynamicLore] 强化等级显示规则: " + (levelRule ? "找到" : "未找到"));
+        }
+
+        if (levelRule) {
+            // 使用规则生成显示文本
+            var textLines = generateDisplayText(levelRule, levelValue);
+            lore.push("");
+            for (var j = 0; j < textLines.length; j++) {
+                lore.push(textLines[j]);
+            }
+        } else {
+            // 默认显示
+            lore.push("");
+            lore.push("§e§l强化: §r§e+" + levelValue);
+        }
+    } else {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 没有强化等级信息");
+        }
+    }
+}
+
+/**
+ * 渲染绑定部分
+ */
+function renderBound(attr, lore) {
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 检查绑定...");
+        print("[DynamicLore] attr.Bound 或 attr.BoundTo 存在吗？ " + (attr.Bound !== undefined || attr.BoundTo !== undefined));
+    }
+
+    if (attr.Bound || attr.BoundTo) {
+        var boundPlayer = attr.BoundTo || attr.Bound;
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 找到绑定信息: " + boundPlayer);
+        }
+        lore.push("");
+        lore.push("§c§l绑定: §r§7" + boundPlayer);
+    } else {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 没有绑定信息");
+        }
+    }
+}
+
+/**
+ * 渲染动态Lore
+ * @param {Object} nbtData - NBT数据对象
+ * @returns {Array} Lore行数组
+ */
+function renderDynamicLore(nbtData) {
+    if (DEBUG_MODE) {
+        print("[DynamicLore] renderDynamicLore 被调用");
+    }
+
+    if (!nbtData.YRAttributes) {
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 物品没有 YRAttributes，跳过");
+        }
+        return null;
+    }
+
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 找到 YRAttributes: " + JSON.stringify(nbtData.YRAttributes));
+    }
+
+    // 确保规则已加载（每次都重新加载以支持热更新）
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 重新加载显示规则...");
+    }
+    displayRules = loadDisplayRules();
+    if (!displayRules) {
+        print("[DynamicLore] 无法加载显示规则！");
+        return null;
+    }
+
+    var attr = nbtData.YRAttributes;
+    var lore = [];
+
+    // 添加分隔线
+    lore.push("§8§m--------------------");
+
+    // 使用配置的显示顺序
+    var order = displayOrder || DEFAULT_DISPLAY_ORDER;
+    if (DEBUG_MODE) {
+        print("[DynamicLore] 使用显示顺序: " + JSON.stringify(order));
+    }
+
+    // 按配置顺序渲染各部分
+    for (var i = 0; i < order.length; i++) {
+        var section = String(order[i]).trim();  // 转换为字符串并去除空格
+        if (DEBUG_MODE) {
+            print("[DynamicLore] 渲染部分: '" + section + "' (类型: " + typeof section + ")");
+        }
+
+        if (section == "attributes") {
+            renderAttributes(attr, lore);
+        } else if (section == "enchantments") {
+            renderEnchantments(attr, lore);
+        } else if (section == "enhance") {
+            renderEnhance(attr, lore);
+        } else if (section == "level") {
+            renderLevel(attr, lore);
+        } else if (section == "bound") {
+            renderBound(attr, lore);
+        } else {
+            if (DEBUG_MODE) {
+                print("[DynamicLore] 未知的显示部分: '" + section + "'");
+            }
         }
     }
 
@@ -317,9 +532,13 @@ function processItem(item) {
             return null;
         }
 
-        // 只处理配置了use_dynamic_lore的物品（有_DynamicLore标记）
-        if (!nbt.contains("_DynamicLore")) {
+        // 检查是否配置了 UseDynamicLore
+        if (!nbt.contains("UseDynamicLore") || nbt.getByte("UseDynamicLore") != 1) {
             return null;
+        }
+
+        if (DEBUG_MODE) {
+            print("[DynamicLore] processItem: 找到 UseDynamicLore 标记的物品");
         }
 
         var nbtData = nbtToObject(nbt);
@@ -351,6 +570,13 @@ function processItem(item) {
         // 克隆物品并设置Lore
         var cloned = item.clone();
         cloned.setLore(newLore);
+
+        // 添加动态Lore标记
+        var clonedNbt = cloned.getNamedTag();
+        if (clonedNbt != null) {
+            clonedNbt.putByte("_DynamicLore", 1);
+            cloned.setNamedTag(clonedNbt);
+        }
 
         if (DEBUG_MODE) {
             print("[DynamicLore] processItem: 成功处理物品");
@@ -451,6 +677,7 @@ function onDataPacketSend(event) {
 if (typeof SCRIPT_INITIALIZED === 'undefined') {
     SCRIPT_INITIALIZED = true;
     print("动态Lore脚本已加载 - 状态: " + (DYNAMIC_LORE_ENABLED ? "启用" : "禁用"));
+    print("调试模式: " + (DEBUG_MODE ? "开启" : "关闭"));
     print("配置文件: configs/" + CONFIG_FILE);
 
     // 立即加载显示规则

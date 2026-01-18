@@ -87,12 +87,6 @@ public class ItemConfig {
                     itemData.setSections(sections);
                 }
 
-                // 读取use_dynamic_lore配置
-                if (itemSection.exists("use_dynamic_lore")) {
-                    boolean useDynamicLore = itemSection.getBoolean("use_dynamic_lore", false);
-                    itemData.setUseDynamicLore(useDynamicLore);
-                }
-
                 items.put(itemKey, itemData);
                 
                 plugin.getLogger().debug("加载物品: " + itemKey + " -> " + name);
